@@ -1,14 +1,14 @@
 {
   "name": "firebase-html-bot",
   "version": "1.0.0",
-  "description": "Running HTML Bot 24/7 with Puppeteer",
+  "description": "Running HTML Bot 24/7 with JSDOM",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm install && npx puppeteer browsers install chrome"
+    "build": "npm install"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "puppeteer": "^22.0.0"
+    "jsdom": "^24.0.0"
   }
 }
