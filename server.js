@@ -1,43 +1,55 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const fs = require('fs');
 const path = require('path');
+const { JSDOM, ResourceLoader } = require('jsdom');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// আপনার ফোল্ডারের ফাইলগুলো (index.html) হোস্ট করার জন্য
 app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// সার্ভার চালু করা এবং Puppeteer দিয়ে HTML ব্যাকগ্রাউন্ডে ওপেন করা
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
     console.log(`✅ Web server running on port ${PORT}`);
-
-    try {
-        console.log("🚀 Starting background Browser (Puppeteer)...");
-        
-        const browser = await puppeteer.launch({
-            headless: true, // ব্রাউজার হাইড করে চালাবে
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu'
-            ]
-        });
-        
-        const page = await browser.newPage();
-        
-        // আপনার HTML পেজটি ব্রাউজারে ওপেন হচ্ছে
-        await page.goto(`http://localhost:${PORT}`);
-        
-        console.log("✅ Your HTML Bot is now running 24/7 in the background!");
-        console.log("📡 It will fetch data from Firebase and send Telegram messages automatically.");
-        
-    } catch (error) {
-        console.error("❌ Puppeteer error:", error);
-    }
+    startVirtualBrowser();
 });
+
+// ভার্চুয়াল ব্রাউজার (JSDOM) চালু করার ফাংশন
+function startVirtualBrowser() {
+    console.log("🚀 Starting ultra-light Virtual Browser (JSDOM)...");
+    
+    try {
+        const htmlPath = path.join(__dirname, 'index.html');
+        const htmlContent = fs.readFileSync(htmlPath, 'utf8');
+
+        // এক্সটার্নাল স্ক্রিপ্ট (যেমন Firebase) লোড করার পারমিশন
+        const resourceLoader = new ResourceLoader({
+            strictSSL: false,
+            userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36"
+        });
+
+        // HTML কে মেমোরিতে রান করানো হচ্ছে
+        const dom = new JSDOM(htmlContent, {
+            url: `http://localhost:${PORT}/`,
+            runScripts: "dangerously", // JS রান করার পারমিশন
+            resources: resourceLoader,
+            pretendToBeVisual: true
+        });
+
+        // Fetch API যুক্ত করা হচ্ছে (যাতে আপনার টেলিগ্রাম API কাজ করে)
+        dom.window.fetch = fetch;
+
+        // আপনার HTML এর কনসোল লগগুলো Render এর টার্মিনালে দেখার জন্য
+        dom.window.console.log = (...args) => console.log("[BOT STATUS]:", ...args);
+        dom.window.console.error = (...args) => console.error("[BOT ERROR]:", ...args);
+
+        console.log("✅ Virtual Browser loaded successfully!");
+        console.log("📡 HTML Bot is now running and sending Telegram messages...");
+
+    } catch (error) {
+        console.error("❌ Error starting Virtual Browser:", error);
+    }
+}
