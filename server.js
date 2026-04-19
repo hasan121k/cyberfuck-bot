@@ -1,6 +1,7 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const path = require('path');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,41 +13,63 @@ app.get('/', (req, res) => {
 
 // সার্ভার সজাগ রাখার পেজ
 app.get('/ping', (req, res) => {
-    res.send('Server is awake and running 24/7!');
+    res.send('Server is awake!');
 });
 
-app.listen(PORT, async () => {
-    console.log(`Server is running on port ${PORT}`);
-    
+let browser;
+
+// ব্রাউজার চালানোর ফাংশন (যাতে ক্র্যাশ করলে আবার চালানো যায়)
+async function startBrowser() {
     try {
-        const browser = await puppeteer.launch({
+        console.log("Starting invisible browser...");
+        browser = await puppeteer.launch({
             headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
-                '--disable-background-timer-throttling', // ব্যাকগ্রাউন্ডে টাইমার ঘুমানো বন্ধ করবে
-                '--disable-backgrounding-occluded-windows', // স্ক্রিপ্ট সচল রাখবে
-                '--disable-renderer-backgrounding' // পেজ সবসময় লাইভ রাখবে
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--no-zygote',
+                '--single-process', // র‍্যাম অনেক কম খাবে
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding'
             ]
         });
         
         const page = await browser.newPage();
 
-        // ⚠️ আপনার সাইটের ভেতরের লগগুলো Render এর টার্মিনালে দেখাবে
-        page.on('console', msg => console.log('BROWSER LOG:', msg.text()));
-        page.on('pageerror', error => console.error('BROWSER ERROR:', error.message));
-
         await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle2' });
-        console.log("✅ অদৃশ্য ব্রাউজার সফলভাবে ওপেন হয়েছে এবং Sleep Mode বন্ধ করা হয়েছে!");
+        console.log("✅ ব্রাউজার সফলভাবে চালু হয়েছে। সিগন্যাল যাচ্ছে!");
 
-        // প্রতি ৫ মিনিট পরপর ব্রাউজারের ভেতর একটি ফেক ক্লিক করবে (যাতে ব্রাউজার ভাবে কোনো মানুষ বসে আছে)
+        // ⚠️ যদি র‍্যাম ফুল হওয়ার কারণে ব্রাউজার অফ হয়ে যায়, তবে অটোমেটিক রিস্টার্ট হবে!
+        browser.on('disconnected', () => {
+            console.log("⚠️ ব্রাউজার ক্র্যাশ করেছে! ৫ সেকেন্ড পর অটো রিস্টার্ট হচ্ছে...");
+            setTimeout(startBrowser, 5000);
+        });
+
+        // ব্রাউজারকে সজাগ রাখতে প্রতি ১ মিনিট পর পর একটি ফেক ক্লিক
         setInterval(async () => {
             try {
                 await page.evaluate(() => document.body.click());
             } catch (e) {}
-        }, 300000);
+        }, 60000);
 
     } catch (error) {
-        console.error("Browser launch error:", error);
+        console.error("Browser error:", error);
+        setTimeout(startBrowser, 10000); // এরর হলে ১০ সেকেন্ড পর আবার চেষ্টা করবে
     }
+}
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    
+    // ব্রাউজার স্টার্ট করা
+    startBrowser();
+
+    // সার্ভার যেন না ঘুমায় তাই প্রতি ৫ মিনিট পর পর নিজেকে নিজে নক (Ping) করবে
+    setInterval(() => {
+        http.get(`http://localhost:${PORT}/ping`);
+    }, 300000);
 });
