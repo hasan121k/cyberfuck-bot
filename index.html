@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DK WIN DUAL HACK - 30S & 1M</title>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #00f3ff;
+      --secondary: #bc13fe;
+      --bg-dark: #050508;
+      --card-bg: rgba(15, 15, 25, 0.75);
+      --win: #00ff66;
+      --loss: #ff003c;
+      --text-main: #e0e0e0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 15px;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(188,19,254,0.1), transparent 40%),
+                  radial-gradient(circle at 80% 20%, rgba(0,243,255,0.1), transparent 40%);
+      animation: rotateBg 20s linear infinite; z-index: -1;
+    }
+    @keyframes rotateBg { 100% { transform: rotate(360deg); } }
+
+    #bootScreen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 9999; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; color: var(--primary);
+      font-family: 'Orbitron', sans-serif; transition: 0.5s opacity;
+    }
+    .glitch-text { font-size: 2rem; font-weight: 900; letter-spacing: 5px; text-shadow: 0 0 20px var(--primary); animation: glitch 1s infinite alternate; text-align: center; }
+    @keyframes glitch {
+      0% { transform: skewX(-10deg); text-shadow: 0 0 20px var(--primary), 2px 2px var(--loss); }
+      100% { transform: skewX(10deg); text-shadow: 0 0 20px var(--primary), -2px -2px var(--secondary); }
+    }
+    .loading-bar-container { width: 80%; max-width: 300px; height: 10px; border: 1px solid var(--primary); margin-top: 20px; border-radius: 5px; overflow: hidden; }
+    .loading-bar { height: 100%; background: var(--primary); width: 0%; box-shadow: 0 0 15px var(--primary); transition: width 0.2s; }
+
+    .app-container {
+      width: 100%; max-width: 450px; display: none;
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(40px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .tg-bar {
+      width: 100%; background: linear-gradient(90deg, rgba(188,19,254,0.2), rgba(0,243,255,0.2));
+      padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;
+      text-decoration: none; color: #fff; margin-bottom: 15px; font-weight: 700;
+      border: 1px solid rgba(0, 243, 255, 0.5); backdrop-filter: blur(10px);
+      font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); transition: 0.3s;
+    }
+    .tg-bar:hover { box-shadow: 0 0 25px rgba(188, 19, 254, 0.6); transform: translateY(-2px); }
+
+    .tab-container { display: flex; gap: 10px; width: 100%; margin-bottom: 20px; }
+    .tab-btn {
+      flex: 1; padding: 15px; background: rgba(0,0,0,0.6); border: 1px solid #333;
+      color: #888; border-radius: 12px; font-family: 'Orbitron', sans-serif; font-weight: 900;
+      font-size: 1rem; cursor: pointer; transition: 0.3s; letter-spacing: 1px;
+    }
+    .tab-btn.active { background: rgba(0, 243, 255, 0.15); color: var(--primary); border-color: var(--primary); box-shadow: 0 0 15px rgba(0,243,255,0.3); }
+
+    .game-section { display: none; }
+    .game-section.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .header-card { background: var(--card-bg); border-radius: 15px; padding: 20px; text-align: center; border: 1px solid rgba(0, 243, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.8); margin-bottom: 20px; backdrop-filter: blur(15px); }
+    .app-title { font-family: 'Orbitron', sans-serif; font-size: 1.4rem; margin-bottom: 5px; background: linear-gradient(90deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; letter-spacing: 2px; }
+    .server-status { font-size: 0.75rem; color: var(--win); font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+    .server-status i { animation: blink 1s infinite; }
+    
+    .timer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .period-box { text-align: left; }
+    .period-box span { display: block; font-size: 0.75rem; color: #888; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+    .period-box strong { font-size: 1.1rem; color: #fff; font-family: 'Inter', sans-serif; letter-spacing: 1px; }
+    
+    .timer-box { background: rgba(0, 243, 255, 0.1); border: 1px solid var(--primary); padding: 8px 15px; border-radius: 8px; box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.2); min-width: 90px; }
+    .timer-box h3 { font-family: 'Orbitron', sans-serif; color: var(--primary); font-size: 1.4rem; letter-spacing: 2px; }
+
+    .result-card { background: linear-gradient(135deg, rgba(0,243,255,0.08), rgba(188,19,254,0.08)); border-radius: 20px; padding: 25px 20px; text-align: center; border: 1px solid rgba(0, 243, 255, 0.4); box-shadow: 0 0 40px rgba(0, 243, 255, 0.1); margin-bottom: 20px; position: relative; overflow: hidden; }
+    .result-card::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 2px; background: linear-gradient(90deg, transparent, var(--primary), transparent); animation: scanline 3s infinite; }
+    @keyframes scanline { 100% { left: 200%; } }
+
+    .math-logic { font-size: 0.75rem; color: #fcee0a; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; margin-bottom: 10px; background: rgba(255, 238, 10, 0.1); padding: 5px; border-radius: 5px; border: 1px solid rgba(255, 238, 10, 0.3); }
+    
+    .main-result { font-size: 3rem; font-weight: 900; font-family: 'Orbitron', sans-serif; text-transform: uppercase; letter-spacing: 5px; margin: 15px 0; text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+    .res-big { color: var(--primary); text-shadow: 0 0 25px var(--primary); }
+    .res-small { color: var(--secondary); text-shadow: 0 0 25px var(--secondary); }
+    .res-analyzing { color: #fcee0a; font-size: 1.8rem; animation: pulse 1s infinite; text-shadow: 0 0 20px #fcee0a; }
+    
+    .accuracy-box { margin-top: 15px; text-align: left; }
+    .accuracy-box span { font-size: 0.7rem; color: #aaa; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; display: flex; justify-content: space-between; }
+    .acc-bar-bg { width: 100%; height: 6px; background: #111; border-radius: 5px; margin-top: 8px; overflow: hidden; border: 1px solid #333; }
+    .acc-bar-fill { height: 100%; background: linear-gradient(90deg, var(--secondary), var(--primary)); width: 0%; border-radius: 5px; box-shadow: 0 0 10px var(--primary); transition: width 1s ease-in-out; }
+
+    .history-card { background: var(--card-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+    table { width: 100%; border-collapse: collapse; text-align: center; }
+    th { background: rgba(0, 243, 255, 0.08); color: var(--primary); padding: 12px; font-size: 0.75rem; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; border-bottom: 1px solid rgba(0, 243, 255, 0.2); }
+    td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem; font-weight: 600; font-family: 'Inter', sans-serif; }
+    .history-period { color: #888; font-family: 'Orbitron', sans-serif; }
+
+    /* WINGO POPUPS */
+    .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 100000; display: none; justify-content: center; align-items: center; }
+    .win-box { display: none; width: 90%; max-width: 350px; text-align: center; position: relative; background: radial-gradient(circle, #ff8c00, #ff2a00); border-radius: 25px; padding: 40px 20px; box-shadow: 0 0 50px rgba(255, 140, 0, 0.8); animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 3px solid #ffcc00; }
+    .win-box .sunburst { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: repeating-conic-gradient(rgba(255,255,255,0.1) 0 15deg, transparent 15deg 30deg); animation: rotateBg 15s linear infinite; z-index: 0; }
+    .win-box .content { position: relative; z-index: 1; }
+    .win-box .trophy { font-size: 80px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); animation: bounce 2s infinite; }
+    .win-box h2 { font-family: 'Orbitron', sans-serif; font-size: 26px; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin: 15px 0 5px; letter-spacing: 2px; }
+    .win-box .ribbon { background: linear-gradient(to bottom, #fff, #ffe6e6); color: #d32f2f; font-family: 'Inter', sans-serif; font-weight: 900; font-size: 32px; padding: 10px 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); display: inline-block; margin-top: 10px; border: 2px solid #ffcc00; letter-spacing: 1px; }
+
+    .loss-box { display: none; width: 90%; max-width: 350px; text-align: center; position: relative; background: linear-gradient(135deg, #2b2b2b, #1a1a1a); border-radius: 25px; padding: 40px 20px; box-shadow: 0 0 50px rgba(255, 0, 60, 0.5); animation: popInLoss 0.6s ease; border: 2px solid #555; }
+    .loss-box .sad-face { font-size: 80px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5)); animation: shake 0.5s ease-in-out; }
+    .loss-box h2 { font-family: 'Orbitron', sans-serif; font-size: 26px; color: #ff4d4d; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); margin: 15px 0 5px; letter-spacing: 2px; }
+    .loss-box .loss-badge { background: rgba(255, 0, 0, 0.1); color: #ff3333; font-family: 'Inter', sans-serif; font-weight: 900; font-size: 32px; padding: 10px 30px; border-radius: 12px; border: 2px solid #ff3333; display: inline-block; margin-top: 10px; }
+
+    @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 80% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); } }
+    @keyframes popInLoss { 0% { transform: translateY(-50px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+    .confetti-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; pointer-events: none; z-index: 2; }
+    .confetti { position: absolute; width: 10px; height: 10px; background-color: #fff; animation: fall linear forwards; opacity: 0; }
+    @keyframes fall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(300px) rotate(360deg); opacity: 0; } }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<!-- WINGO MARKET POPUP -->
+<div id="resultPopup" class="popup-overlay">
+  <div id="winBox" class="win-box">
+    <div class="sunburst"></div>
+    <div class="confetti-container" id="confettiBox"></div>
+    <div class="content">
+      <div class="trophy">🏆</div>
+      <h2>CONGRATULATIONS</h2>
+      <div class="ribbon">YOU WIN</div>
+    </div>
+  </div>
+  <div id="lossBox" class="loss-box">
+    <div class="content">
+      <div class="sad-face">😭</div>
+      <h2>SORRY</h2>
+      <div class="loss-badge">YOU LOSE</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOOT SCREEN -->
+<div id="bootScreen">
+  <div class="glitch-text">DK WIN DUAL SYSTEM</div>
+  <div style="margin-top: 10px; font-size: 0.8rem; color: #888;">CONNECTING TO 30S & 1M SERVERS...</div>
+  <div class="loading-bar-container"><div class="loading-bar" id="loadBar"></div></div>
+</div>
+
+<!-- MAIN APP -->
+<div class="app-container" id="appMain">
+  
+  <a href="https://t.me/Freedkwinhack123" target="_blank" class="tg-bar">
+    <span><i class="fab fa-telegram-plane"></i> JOIN PREMIUM CHANNEL</span>
+    <i class="fas fa-external-link-alt" style="font-size: 0.9rem; color:#fff;"></i>
+  </a>
+
+  <div class="tab-container">
+    <button class="tab-btn active" id="btn30S" onclick="switchTab('30S')">30 SEC</button>
+    <button class="tab-btn" id="btn1M" onclick="switchTab('1M')">1 MIN</button>
+  </div>
+
+  <div id="section30S" class="game-section active">
+    <div class="header-card">
+      <div class="app-title"><i class="fas fa-bolt"></i> DK WIN 30S HACK</div>
+      <div class="server-status"><i class="fas fa-circle"></i> SERVER CONNECTED</div>
+      <div class="timer-row">
+        <div class="period-box"><span>LIVE CYCLE</span><strong id="period30S">Loading...</strong></div>
+        <div class="timer-box"><h3 id="timer30S">00:30</h3></div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="math-logic" id="math30S"><i class="fas fa-calculator"></i> CALCULATING MATH...</div>
+      <div id="result30S" class="main-result res-analyzing">WAIT...</div>
+      <div class="accuracy-box">
+        <span>ACCURACY <b id="accText30S" style="color: var(--primary);">0%</b></span>
+        <div class="acc-bar-bg"><div class="acc-bar-fill" id="accFill30S"></div></div>
+      </div>
+    </div>
+
+    <div class="history-card">
+      <table>
+        <thead><tr><th>CYCLE</th><th>SIZE</th><th>STATE</th></tr></thead>
+        <tbody id="table30S"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="section1M" class="game-section">
+    <div class="header-card">
+      <div class="app-title"><i class="fas fa-server"></i> DK WIN 1M HACK</div>
+      <div class="server-status"><i class="fas fa-circle"></i> SERVER CONNECTED</div>
+      <div class="timer-row">
+        <div class="period-box"><span>LIVE CYCLE</span><strong id="period1M">Loading...</strong></div>
+        <div class="timer-box"><h3 id="timer1M">00:60</h3></div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <div class="math-logic" id="math1M"><i class="fas fa-calculator"></i> CALCULATING MATH...</div>
+      <div id="result1M" class="main-result res-analyzing">WAIT...</div>
+      <div class="accuracy-box">
+        <span>ACCURACY <b id="accText1M" style="color: var(--primary);">0%</b></span>
+        <div class="acc-bar-bg"><div class="acc-bar-fill" id="accFill1M"></div></div>
+      </div>
+    </div>
+
+    <div class="history-card">
+      <table>
+        <thead><tr><th>CYCLE</th><th>SIZE</th><th>STATE</th></tr></thead>
+        <tbody id="table1M"></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div style="text-align: center; margin-top: 20px; font-family: 'Orbitron', sans-serif; font-size: 0.7rem; color: #555; letter-spacing: 2px;">
+    &copy; 2026 RAKESH PRIVATE MOD
+  </div>
+</div>
+
+<script>
+  // ⚠️ FIREBASE INTEGRATION ⚠️
+  const firebaseConfig = {
+      apiKey: "AIzaSyByZ6BElQgRFqc8lT_th7_zVC90bd-ojTA",
+      authDomain: "prido-dfae3.firebaseapp.com",
+      databaseURL: "https://prido-dfae3-default-rtdb.firebaseio.com",
+      projectId: "prido-dfae3",
+      storageBucket: "prido-dfae3.firebasestorage.app",
+      messagingSenderId: "473296982048",
+      appId: "1:473296982048:web:b56e19bdbb94a5a5442c45",
+      measurementId: "G-5K77JS2BD1"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Load Telegram Settings from Firebase
+  let tgSettings = null;
+  db.ref('telegram_settings').on('value', (snap) => {
+      tgSettings = snap.val();
+  });
+
+  // API Links
+  const API_30S = 'https://draw.ar-lottery01.com/WinGo/WinGo_30S/GetHistoryIssuePage.json';
+  const API_1M = 'https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json';
+  
+  let activeTab = '30S';
+  const state = {
+    '30S': { currentPeriod: "", history: [] },
+    '1M':  { currentPeriod: "", history:[] }
+  };
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.getElementById('btn30S').classList.toggle('active', tab === '30S');
+    document.getElementById('btn1M').classList.toggle('active', tab === '1M');
+    
+    document.getElementById('section30S').classList.toggle('active', tab === '30S');
+    document.getElementById('section1M').classList.toggle('active', tab === '1M');
+  }
+
+  // Telegram Sender Function
+  function sendTelegramMsg(msgType, period, signal = "") {
+      if (!tgSettings || !tgSettings.is_active) return;
+      if (!tgSettings.bot_token || !tgSettings.chat_id) return;
+
+      let rawMsg = "";
+      if (msgType === "SIGNAL") rawMsg = tgSettings.msg_signal;
+      else if (msgType === "WIN") rawMsg = tgSettings.msg_win;
+      else if (msgType === "LOSS") rawMsg = tgSettings.msg_loss;
+
+      if(!rawMsg) return;
+
+      // Replace placeholders
+      let finalMsg = rawMsg.replace(/{period}/g, period).replace(/{signal}/g, signal);
+
+      const url = `https://api.telegram.org/bot${tgSettings.bot_token}/sendMessage`;
+      fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+              chat_id: tgSettings.chat_id,
+              text: finalMsg
+          })
+      }).catch(err => console.log("Telegram Error:", err));
+  }
+
+  // --- 🌟 WEB WORKER SYSTEM FOR BACKGROUND RUNNING 🌟 ---
+  const workerCode = `
+      let syncInterval;
+      self.onmessage = function(e) {
+          if (e.data === 'start') {
+              syncInterval = setInterval(() => {
+                  self.postMessage('sync');
+              }, 2000);
+          } else if (e.data === 'stop') {
+              clearInterval(syncInterval);
+          }
+      };
+  `;
+  const blob = new Blob([workerCode], { type: 'application/javascript' });
+  const worker = new Worker(URL.createObjectURL(blob));
+
+  worker.onmessage = function(e) {
+      if(e.data === 'sync') {
+          syncServer('30S', API_30S);
+          syncServer('1M', API_1M);
+      }
+  };
+
+  let progress = 0;
+  const loadInterval = setInterval(() => {
+    progress += Math.floor(Math.random() * 15) + 5;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(loadInterval);
+      setTimeout(() => {
+        document.getElementById('bootScreen').style.opacity = "0";
+        setTimeout(() => {
+          document.getElementById('bootScreen').style.display = "none";
+          document.getElementById('appMain').style.display = "block";
+          startEngine();
+        }, 500);
+      }, 500);
+    }
+    document.getElementById('loadBar').style.width = progress + "%";
+  }, 200);
+
+  function startTimers() {
+    setInterval(() => {
+      const now = new Date();
+      const seconds = now.getSeconds();
+      
+      let rem30 = seconds < 30 ? 30 - seconds : 60 - seconds;
+      document.getElementById('timer30S').innerText = `00:${rem30 < 10 ? '0'+rem30 : rem30}`;
+      
+      let rem1M = 60 - seconds;
+      if (rem1M === 60) rem1M = 0;
+      document.getElementById('timer1M').innerText = `00:${rem1M < 10 ? '0'+rem1M : rem1M}`;
+    }, 1000);
+  }
+
+  function getMathPrediction(list, nextPeriodNumber) {
+    if (!list || list.length < 5) return { size: 'WAIT...', mode: 'SYNCING DATA...' };
+
+    let sumOfLast5 = 0;
+    for(let i = 0; i < 5; i++) {
+        sumOfLast5 += parseInt(list[i].number);
+    }
+
+    let periodLastDigit = parseInt(nextPeriodNumber.toString().slice(-1));
+    let totalSum = sumOfLast5 + periodLastDigit;
+
+    let sumDigitsText = totalSum.toString().split('').join(' + ');
+    let finalDigit = totalSum.toString().split('').reduce((a, b) => parseInt(a) + parseInt(b), 0);
+
+    let decision = finalDigit >= 5 ? 'BIG' : 'SMALL';
+    let mathModeText = `⚡ MATH: ${sumOfLast5} + ${periodLastDigit} = ${totalSum} ➡ ${sumDigitsText} = ${finalDigit}`;
+    let confidence = Math.floor(Math.random() * 11) + 88; 
+    
+    return { size: decision, mode: mathModeText, accuracy: confidence };
+  }
+
+  function showPopup(type) {
+    const overlay = document.getElementById('resultPopup');
+    const winBox = document.getElementById('winBox');
+    const lossBox = document.getElementById('lossBox');
+    
+    overlay.style.display = 'flex';
+    if (type === 'WIN') {
+      winBox.style.display = 'block';
+      lossBox.style.display = 'none';
+      
+      const box = document.getElementById('confettiBox');
+      box.innerHTML = '';
+      const colors =['#ff0', '#0f0', '#00f', '#f00', '#f0f', '#0ff'];
+      for(let i = 0; i < 30; i++) {
+        const conf = document.createElement('div');
+        conf.classList.add('confetti');
+        conf.style.left = Math.random() * 100 + '%';
+        conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        conf.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+        conf.style.animationDelay = Math.random() + 's';
+        box.appendChild(conf);
+      }
+    } else {
+      winBox.style.display = 'none';
+      lossBox.style.display = 'block';
+    }
+    
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      winBox.style.display = 'none';
+      lossBox.style.display = 'none';
+    }, 3500);
+  }
+
+  function renderHistory(type) {
+    const tbody = document.getElementById(`table${type}`);
+    tbody.innerHTML = "";
+    
+    state[type].history.forEach(item => {
+      let colorClass = item.s === "BIG" ? "color: var(--primary);" : "color: var(--secondary);";
+      
+      let statusBadge = '';
+      if (item.isWin === true) {
+        statusBadge = '<span style="background:var(--win); color:#000; padding:3px 8px; border-radius:4px; font-weight:bold;">WIN</span>';
+      } else if (item.isWin === false) {
+        statusBadge = '<span style="background:var(--loss); color:#fff; padding:3px 8px; border-radius:4px; font-weight:bold;">LOSS</span>';
+      } else {
+        statusBadge = '<span style="background:#444; color:#fff; padding:3px 8px; border-radius:4px; font-weight:bold;">WAIT</span>';
+      }
+
+      tbody.innerHTML += `
+        <tr>
+          <td class="history-period">${item.p.slice(-4)}</td>
+          <td style="${colorClass} font-family:'Orbitron', sans-serif; font-weight:900;">${item.s}</td>
+          <td>${statusBadge}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function showAnalyzing(type) {
+    const resText = document.getElementById(`result${type}`);
+    resText.className = "main-result res-analyzing";
+    resText.innerText = "ANALYZING...";
+    document.getElementById(`accText${type}`).innerText = "SYNCING...";
+    document.getElementById(`accFill${type}`).style.width = "0%";
+    document.getElementById(`math${type}`).innerHTML = `<i class="fas fa-spinner fa-spin"></i> CALCULATING MATH...`;
+  }
+
+  async function syncServer(type, apiUrl) {
+    try {
+      const response = await fetch(apiUrl + '?v=' + Date.now());
+      const data = await response.json();
+      if (!data?.data?.list) return;
+
+      const list = data.data.list;
+      const latestIssue = list[0].issueNumber;
+      const actualNumber = parseInt(list[0].number);
+      const actualSize = actualNumber >= 5 ? 'BIG' : 'SMALL';
+      const nextPrd = (BigInt(latestIssue) + 1n).toString();
+
+      // Check Previous Pending Prediction
+      let pendingPrediction = state[type].history.find(h => h.p === latestIssue && h.actual === null);
+      if (pendingPrediction) {
+          pendingPrediction.actual = actualSize;
+          pendingPrediction.isWin = (pendingPrediction.s === actualSize);
+          
+          // Show popup ONLY if this tab is active
+          if (activeTab === type) {
+              showPopup(pendingPrediction.isWin ? 'WIN' : 'LOSS');
+          }
+          renderHistory(type); 
+
+          // 🚀 SEND RESULT TO TELEGRAM (ONLY FOR 1 MINUTE SERVER)
+          if (type === '1M') {
+              sendTelegramMsg(pendingPrediction.isWin ? 'WIN' : 'LOSS', latestIssue.slice(-4));
+          }
+      }
+
+      // New Period Detected
+      if (state[type].currentPeriod !== nextPrd) {
+        state[type].currentPeriod = nextPrd;
+        document.getElementById(`period${type}`).innerText = nextPrd;
+        
+        showAnalyzing(type);
+        
+        setTimeout(() => {
+          const prediction = getMathPrediction(list, nextPrd);
+          
+          // Update UI
+          const resText = document.getElementById(`result${type}`);
+          resText.className = "main-result " + (prediction.size === "BIG" ? "res-big" : "res-small");
+          resText.innerText = prediction.size;
+          
+          document.getElementById(`accText${type}`).innerText = prediction.accuracy + "%";
+          document.getElementById(`accFill${type}`).style.width = prediction.accuracy + "%";
+          document.getElementById(`math${type}`).innerHTML = `<i class="fas fa-calculator"></i> ${prediction.mode}`;
+          
+          // Save to History
+          state[type].history.unshift({ p: nextPrd, s: prediction.size, actual: null, isWin: null });
+          if(state[type].history.length > 7) state[type].history.pop(); 
+          
+          renderHistory(type);
+
+          // 🚀 SEND NEW SIGNAL TO TELEGRAM (ONLY FOR 1 MINUTE SERVER)
+          if (type === '1M') {
+              setTimeout(() => {
+                  sendTelegramMsg('SIGNAL', nextPrd.slice(-4), prediction.size);
+              }, 1000); // 1 sec delay to ensure result msg is sent first
+          }
+
+        }, 2000);
+      }
+    } catch (error) {
+      console.error(`API Sync Error (${type}):`, error);
+    }
+  }
+
+  function startEngine() {
+    startTimers();
+    // Immediate first fetch
+    syncServer('30S', API_30S);
+    syncServer('1M', API_1M);
+    
+    // Start background worker for continuous sync
+    worker.postMessage('start');
+  }
+
+</script>
+</body>
+</html>
