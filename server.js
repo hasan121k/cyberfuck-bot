@@ -1,90 +1,43 @@
 const express = require('express');
 const puppeteer = require('puppeteer');
 const path = require('path');
-const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// আপনার ফোল্ডারের ফাইলগুলো (index.html) হোস্ট করার জন্য
+app.use(express.static(__dirname));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/ping', (req, res) => {
-    res.send('Server is running perfectly 24/7!');
-});
+// সার্ভার চালু করা এবং Puppeteer দিয়ে HTML ব্যাকগ্রাউন্ডে ওপেন করা
+app.listen(PORT, async () => {
+    console.log(`✅ Web server running on port ${PORT}`);
 
-let browser;
-
-async function startBrowser() {
     try {
-        console.log("Starting ULTRA-LIGHT background browser...");
-        browser = await puppeteer.launch({
-            headless: 'new',
+        console.log("🚀 Starting background Browser (Puppeteer)...");
+        
+        const browser = await puppeteer.launch({
+            headless: true, // ব্রাউজার হাইড করে চালাবে
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--no-zygote',
-                '--mute-audio',
-                '--disable-extensions',
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-renderer-backgrounding'
+                '--disable-gpu'
             ]
         });
         
         const page = await browser.newPage();
-
-        // 🚀 RAM বাঁচানোর ম্যাজিক: ফন্ট, ছবি এবং সিএসএস ব্লক করে দেওয়া হলো!
-        await page.setRequestInterception(true);
-        page.on('request', (req) => {
-            if (['stylesheet', 'font', 'image', 'media'].includes(req.resourceType())) {
-                req.abort();
-            } else {
-                req.continue();
-            }
-        });
-
-        // যেকোনো টাইমআউট এরর বন্ধ করা হলো
-        page.setDefaultNavigationTimeout(0); 
-
-        // পেজে কোনো এরর হলে লগ দেখাবে
-        page.on('console', msg => console.log('BOT LOG:', msg.text()));
-
-        console.log("Loading page in background...");
-        // localhost এর বদলে 127.0.0.1 ব্যবহার করা হলো (Render এ বেশি স্ট্যাবল)
-        await page.goto(`http://127.0.0.1:${PORT}/`, { waitUntil: 'domcontentloaded' });
         
-        console.log("✅ অদৃশ্য ব্রাউজার পারফেক্টলি চালু হয়েছে! এখন আপনি লিংক থেকে বের হলেও সারাদিন সিগন্যাল যাবে!");
-
-        browser.on('disconnected', () => {
-            console.log("⚠️ ব্রাউজার ডিসকানেক্ট হয়েছে! সাথে সাথে রিস্টার্ট হচ্ছে...");
-            setTimeout(startBrowser, 3000);
-        });
-
-        // ব্রাউজারকে ১০০% সজাগ রাখতে প্রতি ২ মিনিট পরপর স্ক্রিপ্ট রান করানো
-        setInterval(async () => {
-            try { 
-                await page.evaluate(() => console.log("Bot is alive and watching...")); 
-            } catch (e) {}
-        }, 120000);
-
+        // আপনার HTML পেজটি ব্রাউজারে ওপেন হচ্ছে
+        await page.goto(`http://localhost:${PORT}`);
+        
+        console.log("✅ Your HTML Bot is now running 24/7 in the background!");
+        console.log("📡 It will fetch data from Firebase and send Telegram messages automatically.");
+        
     } catch (error) {
-        console.error("Browser crash error:", error.message);
-        setTimeout(startBrowser, 5000); 
+        console.error("❌ Puppeteer error:", error);
     }
-}
-
-app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
-    
-    // সার্ভার পুরোপুরি চালু হওয়ার জন্য ৩ সেকেন্ড অপেক্ষা করে ব্রাউজার স্টার্ট করবে
-    setTimeout(startBrowser, 3000);
-
-    // Render-কে সজাগ রাখতে প্রতি ৫ মিনিট পরপর নক করা
-    setInterval(() => {
-        http.get(`http://127.0.0.1:${PORT}/ping`).on('error', () => {});
-    }, 300000);
 });
